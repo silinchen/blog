@@ -485,7 +485,7 @@ export default function compose(...funcs) {
 
 ### 7.2 实现 applyMiddleware 函数
 
-applyMiddleware 函数传入中间件，并返回一个增强函数，改函数会对 createStore 函数进行增强。
+applyMiddleware 函数传入中间件，并返回一个增强函数，该函数会对 createStore 函数进行增强。
 
 src/redux/applyMiddleware.js
 
@@ -555,7 +555,7 @@ export default function createStore(reducer, enhancer) {
 ```javascript
 // 构建中间件的时候，传入 getState, dispatch，使中间件可以用这两个方法
 const thunk = ({ getState, dispatch }) => {
-  // 第二层上 compose 的时候生成的一层包一层的函数，其中 next 就是下一层中间件，最后一个 next 就是原始的 dispatch
+  // 第二层是 compose 的时候生成的一层包一层的函数，其中 next 就是下一层中间件，最后一个 next 就是原始的 dispatch
   return (next) => {
     // 中间件主要逻辑代码
     return (action) => {
@@ -589,6 +589,8 @@ react-redux 提供了两个 api：`Provider`、`connect`
 2. `connect` 顾名思义，就是连接 Redux store 与组件。它是一个高阶组件（HOC），传入一个组件，并且返回一个新的组件，扩展原来的组件使原来组件可以获取到 sotre 中的数据与变更数据的方法。连接操作不会改变原来的组件类。而是**返回**一个新的已与 Redux store 连接的组件类。
 
 ### 8.2 react-redux 使用
+
+将上面例子改成使用 react-redux
 
 src/index.js
 
@@ -646,11 +648,16 @@ class ReactReduxPage extends Component {
   }
 }
 
+// mapStateToProps 用于将 redux 的 state 传给 组件
+// mapDispatchToProps 用于将 dispatch 与 action 封装成方法，再传给组件，方便组件里修改 state，而不用写大量 dispatch(xxxx)
+
 const mapStateToProps = (state) => ({ count: state });
+// mapDispatchToProps 传一个对象的使用方式
 const mapDispatchToProps = {
   add: () => ({ type: 'ADD' }),
 };
 
+// mapDispatchToProps 传一个函数的使用方式，下面代码与上面传对象的方式实现同样的功能
 // const mapDispatchToProps = (dispatch) => {
 //   return {
 //     dispatch,
@@ -666,11 +673,15 @@ export default connect(mapStateToProps, mapDispatchToProps)(ReactReduxPage);
 
 ### 8.3 react-redux 中用到的 react 的api：Context
 
+这里 Context 用于将 redux 中的 state 传递到各个组件，使组件可以方便的使用 redux 的 state 中的数据。
+
+
+
 在一个典型的 React 应用中，数据是通过 props 属性自上而下（由父及子）进行传递的，但这种做法对于某些类型的属性而言是极其繁琐的（例如：地区偏好，UI 主题），这些属性是应用程序中许多组件都需要的。Context 提供了一种在组件之间共享此类值的方式，而不必显式地通过组件树的逐层传递 props。
 
 Context 在日常开发中用的比较少，在第三方库中用到比较多。react-redux 中就用到这个功能。
 
-Context 的使用
+**Context 的使用**
 
 ```jsx
 // Context 可以让我们无须明确地传遍每一个组件，就能将值深入传递进组件树。
@@ -727,14 +738,38 @@ function Button({ theme }) {
 
 ### 8.4 react-redux 中用到的 redux 的 api：bindActionCreators
 
- `bindActionCreators(actionCreators, dispatch)`
+`bindActionCreators` 在 connect 时传 `mapDispatchToProps` 为对象时会用到，用于将对象中每个 key 对应的 value（action creator） 绑定一层 dispatch 调用。然后通过 props 传给组件，使组件中可以更方便的修改 redux 的 state，减少组件中写很多 dispatch(xxx)。
 
-`bindActionCreators` 把一个 value 为不同 action creator 的对象，转成拥有同名 key 的对象。同时使用 `dispatch`对每个 action creator 进行包装，以便可以直接调用它们。
+action creator 后面会讲。
+
+
+
+用法： `bindActionCreators(actionCreators, dispatch)`
+
+
+
+`bindActionCreators` 把一个 value 为不同 action creator 的对象，转成拥有同名 key 的对象，同时使用 `dispatch`对每个 action creator 进行包装，以便可以直接调用它们。
+
+作用大概是下面这样的效果：
+
+```javascript
+{
+  add: () => ({ type: 'ADD' }),
+};
+// 变成
+{
+	add: () => dispatch({ type: 'ADD' })
+}
+```
+
+
 
 参数：
 
 1. `actionCreators` (*Function* or *Object*): 一个 action creator，或者一个 value 是 action creator 的对象。
 2. `dispatch` (*Function*): 一个由 `Store` 实例提供的 `dispatch` 函数。
+
+
 
 #### 8.4.1 Action Creator
 
@@ -755,8 +790,9 @@ dispatch(ADD_TODO('待办事项1')) // dispatch({ type: 'ADD', text: '待办事�
 
 #### 8.4.1 bindActionCreators 实现
 
+作用：在 `mapDispatchToProps` 为对象时，使对象 `{ add: () => ({type: 'ADD'})}`  相当于 `add = () => dispatch({type: 'ADD'})`
+
 ```javascript
-// { add: () => ({type: 'ADD'})}  => add = () => dispatch({type: 'ADD'})
 // bindActionCreator 会对 action creator 进行包装，加上 dispatch 调用
 function bindActionCreator(actionCreator, dispatch) {
   return (...args) => dispatch(actionCreator(...args));
