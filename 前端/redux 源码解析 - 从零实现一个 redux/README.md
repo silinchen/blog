@@ -742,11 +742,7 @@ function Button({ theme }) {
 
 action creator 后面会讲。
 
-
-
 用法： `bindActionCreators(actionCreators, dispatch)`
-
-
 
 `bindActionCreators` 把一个 value 为不同 action creator 的对象，转成拥有同名 key 的对象，同时使用 `dispatch`对每个 action creator 进行包装，以便可以直接调用它们。
 
@@ -953,7 +949,7 @@ export default store;
 
 ### 9.2 chrome 插件：redux devtools
 
-![](https://www.silinchen.com/upload/images/569405e2e63bc1721f61647c2291023d_redux-devtools-panel.png)
+![](./images/redux-devtools-panel.png)
 
 1. 打开 Chrome 调试工具，选择 redux 进入 redux devtools 调试界面。
 
@@ -963,24 +959,24 @@ export default store;
 
 4. `Action` 可以查看当前 action 的详细内容
 
-    ![](https://www.silinchen.com/upload/images/35afd98d9d553bffe4750a6aa6f936f8_redux-devtools-action.png)
+    ![](./images/redux-devtools-action.png)
 
 5. `State` 可以查看当前 state 数据的详细内容
 
-    ![](https://www.silinchen.com/upload/images/cc4583678e9342f3fb18674c612c5280_redux-devtools-state.png)
+    ![](./images/redux-devtools-state.png)
 
 6. `Diff` 可以查看当前 action 执行后，state 发生了哪些变化
 
-    ![](https://www.silinchen.com/upload/images/9da7fa93ce6d9cf63d4aa2a485243c17_redux-devtools-diff.png)
+    ![](./images/redux-devtools-diff.png)
 
 7. `Trace` 跟踪当前 action 执行的代码位置
 
-    ![](https://www.silinchen.com/upload/images/e6430df55c2ac1c9e0d0a260f4857704_redux-devtools-trace.png)
+    ![](./images/redux-devtools-trace.png)
 
 8. `Test` 测试模版
 
-    ![](https://www.silinchen.com/upload/images/dca642bb95e1e0df3234b8990d8cb8ee_redux-devtools-test.png)
-    ![](https://www.silinchen.com/upload/images/b5d2d89dffccecbf9ea8536351e409e8_redux-devtools-toolbar.png)
+    ![](./images/redux-devtools-test.png)
+    ![](./images/redux-devtools-toolbar.png)
 
 9. `Start recording/Pause recording` 开始/停止录制，可以指定从什么时候开始录制到什么停止。
 
@@ -996,11 +992,11 @@ export default store;
 
 15. 切换功能面板到 `Log monitor` 可以查看整个过程的日志
 
-    ![](https://www.silinchen.com/upload/images/91c9dedf77c407e7e6c96f9b13117f6f_redux-devtools-log-monitor.png)
+    ![](./images/redux-devtools-log-monitor.png)
 
 16. 切换功能面板到 `Chart` 可以查看整个 store 的状态
 
-    ![](https://www.silinchen.com/upload/images/f140adba3ecf10f221aec339acf4ff11_redux-devtools-chart.png)
+    ![](./images/redux-devtools-chart.png)
 
 ## 扩展阅读：
 
