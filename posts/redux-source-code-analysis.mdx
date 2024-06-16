@@ -71,7 +71,7 @@ Redux 的创造者 Dan Abramov 又补充了一句。
 ### 3.2 redux flow
 
 
-![redux-flow](http://localhost:3000/post-images/redux-source-code-analysis/redux-flow.png)
+![redux-flow](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-flow.png)
 
 redux 与 react 结合使用的数据流：
 
@@ -80,7 +80,7 @@ redux 与 react 结合使用的数据流：
 3. `reducer` 取到 `state` 和 `action` 后，会通过 `action.type` 匹配到修改 `state` 的规则，然后修改并返回新的 `state`
 4. store 保存新的 state，然后所有订阅了 `store.subscribe()` 的监听器都被调用，并通过 `store.getState()` 获取新的 state，重新渲染组件。
 
-![redux state change](http://localhost:3000/post-images/redux-source-code-analysis/redux-state-change.png)
+![redux state change](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-state-change.png)
 
 ## 4. redux 使用
 
@@ -412,7 +412,7 @@ store 是 redux 的核心内容，除了 store 相关都内容，redux 还提供
 
 中间件的执行在调用 dispatch 到最终 reducer 函数修改 state 的这个过程之间。
 
-![](http://localhost:3000/post-images/redux-source-code-analysis/redux-with-middlewares.png)
+![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-with-middlewares.png)
 
 接下来试用一下最简单的 thunk 和 logger 中间件
 
@@ -951,7 +951,7 @@ export default store;
 
 ### 9.2 chrome 插件：redux devtools
 
-![](http://localhost:3000/post-images/redux-source-code-analysis/redux-devtools-panel.png)
+![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-devtools-panel.png)
 
 1. 打开 Chrome 调试工具，选择 redux 进入 redux devtools 调试界面。
 
@@ -961,24 +961,24 @@ export default store;
 
 4. `Action` 可以查看当前 action 的详细内容
 
-    ![](http://localhost:3000/post-images/redux-source-code-analysis/redux-devtools-action.png)
+    ![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-devtools-action.png)
 
 5. `State` 可以查看当前 state 数据的详细内容
 
-    ![](http://localhost:3000/post-images/redux-source-code-analysis/redux-devtools-state.png)
+    ![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-devtools-state.png)
 
 6. `Diff` 可以查看当前 action 执行后，state 发生了哪些变化
 
-    ![](http://localhost:3000/post-images/redux-source-code-analysis/redux-devtools-diff.png)
+    ![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-devtools-diff.png)
 
 7. `Trace` 跟踪当前 action 执行的代码位置
 
-    ![](http://localhost:3000/post-images/redux-source-code-analysis/redux-devtools-trace.png)
+    ![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-devtools-trace.png)
 
 8. `Test` 测试模版
 
-    ![](http://localhost:3000/post-images/redux-source-code-analysis/redux-devtools-test.png)
-    ![](http://localhost:3000/post-images/redux-source-code-analysis/redux-devtools-toolbar.png)
+    ![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-devtools-test.png)
+    ![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-devtools-toolbar.png)
 
 9. `Start recording/Pause recording` 开始/停止录制，可以指定从什么时候开始录制到什么停止。
 
@@ -994,11 +994,11 @@ export default store;
 
 15. 切换功能面板到 `Log monitor` 可以查看整个过程的日志
 
-    ![](http://localhost:3000/post-images/redux-source-code-analysis/redux-devtools-log-monitor.png)
+    ![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-devtools-log-monitor.png)
 
 16. 切换功能面板到 `Chart` 可以查看整个 store 的状态
 
-    ![](http://localhost:3000/post-images/redux-source-code-analysis/redux-devtools-chart.png)
+    ![](https://www.silinchen.com/post-images/redux-source-code-analysis/redux-devtools-chart.png)
 
 ## 扩展阅读：
 
