@@ -12,16 +12,16 @@ const BASE_URL = process.env.BASE_URL as string
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Next.js Portfolio Starter',
-    template: '%s | Next.js Portfolio Starter',
+    default: '陈斯林的个人网站',
+    template: '%s | 陈斯林的个人网站 - 技术学习、记录、研究、分享',
   },
-  description: 'This is my portfolio.',
+  description: '技术学习、记录、研究、分享',
   openGraph: {
-    title: 'My Portfolio',
-    description: 'This is my portfolio.',
+    title: '陈斯林的个人网站',
+    description: '技术学习、记录、研究、分享',
     url: BASE_URL,
-    siteName: 'My Portfolio',
-    locale: 'en_US',
+    siteName: '陈斯林的个人网站',
+    locale: 'zh_CN',
     type: 'website',
   },
   robots: {
