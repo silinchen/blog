@@ -12,15 +12,15 @@ const BASE_URL = process.env.BASE_URL as string
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: '陈斯林的个人网站',
-    template: '%s | 陈斯林的个人网站 - 技术学习、记录、研究、分享',
+    default: process.env.SITE_NAME as string,
+    template: `%s | ${process.env.SITE_NAME} - ${process.env.SITE_DESCRIPTION}`,
   },
-  description: '技术学习、记录、研究、分享',
+  description: process.env.SITE_DESCRIPTION,
   openGraph: {
-    title: '陈斯林的个人网站',
-    description: '技术学习、记录、研究、分享',
+    title: process.env.SITE_NAME,
+    description: process.env.SITE_DESCRIPTION,
     url: BASE_URL,
-    siteName: '陈斯林的个人网站',
+    siteName: process.env.SITE_NAME,
     locale: 'zh_CN',
     type: 'website',
   },
