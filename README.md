@@ -1,13 +1,36 @@
-# https://www.silinchen.com
-[个人博客](https://www.silinchen.com)网站文章整理
-公众号***「天才前端计划」***，欢迎关注支持^_^
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## Getting Started
 
-### 前端
+First, run the development server:
 
-1. Promise 原理解析与源码实现（遵循 Promise/A+ 规范）[github+源码]( https://github.com/silinchen/promise)  [个人博客]( https://silinchen.com/post/learn-and-write-promise-code )
-2. 从零实现一个简单的Vue框架，掌握MVVM框架原理 [github+源码](https://github.com/silinchen/mvvm)  [个人博客]( https://silinchen.com/post/learn-mvvm-implement-a-simple-vue )
-3. Flex 布局教程，前端必会的基础技能 [github](https://github.com/silinchen/silinchen.com/blob/master/blog/003%20Flex%20布局教程，前端必会的基础技能.md)  [个人博客]( https://silinchen.com/post/css-flexible-box-layout )
-4. redux 源码解析 - 从零实现一个 redux [github](https://github.com/silinchen/silinchen.com/blob/master/blog/003%20Flex%20布局教程，前端必会的基础技能.md)  [个人博客](https://www.silinchen.com/post/redux-source-code-analysis)
-5. 
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
