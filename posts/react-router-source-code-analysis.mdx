@@ -1,0 +1,946 @@
+---
+title: 'React-Router 源码解析 - 从零实现一个 react-router'
+publishedAt: '2021-06-15'
+summary: '参考 React-Router 源码，从零实现一个 React-Router 精简版，包括常用的基本组件、API、hooks等，帮助深入理解和学习 React-Router'
+---
+
+## 1. React-Router 的简单介绍
+
+React Router 是一个基于 React 的强大路由库，它可以让你向应用中快速地添加视图和数据流，同时保持页面与 URL 间的同步。
+
+它拥有简单的 API 与强大的功能例如代码缓冲加载、动态路由匹配、以及建立正确的位置过渡处理。
+
+## 2. 为什么要用 React-Router？
+
+首先来看一下，在不使用 react-router 的情况下，我们切换页面，切换显示的组件可以通过什么方式实现？
+
+### 2.1 使用 State 来判断渲染的组件
+
+```jsx
+function Login() {
+  return <div>Register</div>;
+}
+
+function Register() {
+  return <div>Login</div>;
+}
+
+function App() {
+  let [route, setRoute] = useState('Login');
+  let onClickLogin = () => {
+    setRoute('Login')
+  }
+  let onClickRegister = () => {
+    setRoute('Register') 
+  }
+
+  let Child
+  switch(route) {
+    case 'Login':
+      Child = <Login/>;
+      break;
+    case 'Register':
+      Child = <Register/>;
+      break;
+  }
+
+  return (
+    <div className="App">
+      <button onClick={onClickLogin}>Login</button>
+      <button onClick={onClickRegister}>Register</button>
+      <Child />
+    </div>
+  );
+}
+```
+
+这段代码实现来通过点击按钮，切换不通的状态，渲染不同的组件
+
+### 2.2 使用 hash 来判断要渲染的组件
+
+使用 hash 来判断的好处是，可以通过不同的 url 渲染不同的页面（组件）
+
+```jsx
+function App() {
+  const [route, setRoute] = useState(window.location.hash.substr(1))
+
+  useEffect(() => {
+    window.addEventListener('hashchange', () => {
+      setRoute(window.location.hash.substr(1))
+    })
+  }, [])
+
+  let Child
+  switch(route) {
+    case 'Login':
+      Child = <Login/>;
+      break;
+    case 'Register':
+      Child = <Register/>;
+      break;
+  }
+
+  return (
+    <div className="App">
+      <ul>
+        <li><a href="#/about">About</a></li>
+        <li><a href="#/inbox">Inbox</a></li>
+      </ul>
+      <Child />
+    </div>
+  );
+}
+```
+
+同理，也可以使用 pathname 来判断渲染的页面。
+
+上面这种实现，如果页面多了，组件多了，就需要写很多的判断逻辑。
+
+而 React-Router 就是将这些判断逻辑封装起来，并扩展了其他功能。使我们在开发 react 应用中可以快速解决路由方面的问题。
+
+## 3. React-Router 的使用
+
+在做 web 开发时，一般我们使用 react-router-dom 这个库，这个库包含了 react-router 的所有组件并且扩展了 BrowerRouter、HashRouter、Link 与 NavLink 这几个组件。
+
+
+### 3.1 API 介绍
+
+- `<BrowserRouter />` 对 Router 的扩展，基于 html 5 history api 实现监测 url 变化同步更新组件显示
+
+- `<HashRouter />` 对 Router 的扩展，监测 hash 变化，同步更新组件
+
+- `<Router />` 提供给其他 xxxRouter 使用的低层级公用组件
+
+- `<Route />` 计算是否匹配当前的url，并展示相应的组件
+
+- `<Switch />` 渲染第一个匹配到的 Route
+
+- `<Link />` 声明式路由导航
+
+- `<NavLink />` 一个特殊的 ，当匹配到当前 url 时，会添加可以自定义样式到属性（className，style)
+
+- `<Redirect />` 重定向
+
+- `<Prompt />` 用于在离开页面之前提示用户，例如编辑表单时离开页面
+
+- `<MemoryRouter />` 使用内存保存路由状态而不是根据 url，一般用于非浏览器场景，例如 react-native
+
+- `<StaticRouter />` 使用在 location 不会发生改变的场景，一般用于服务端渲染
+
+- generatePath
+
+- history
+
+- location
+
+- match
+
+- matchPath
+
+- withRouter
+
+- Hooks
+
+    - useHistory
+
+    - useLocation
+
+    - useParams
+
+    - useRouteMatch
+
+### 3.2 react-router 使用
+
+将上面的例子改成使用 react-router
+
+```jsx
+// 引入 相关组件
+import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
+
+function Login() {
+  return <div>Register</div>;
+}
+
+function Register() {
+  return <div>Login</div>;
+}
+
+function App() {
+  return (
+    <Router>
+      <div className="App">
+        {/* 使用 Link 替换 a 标签 */}
+        <Link to="/login">Login</Link>
+        <Link to="/register">Register</Link>
+
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+      </div>
+    </Router>
+  );
+}
+```
+
+由 react-router 去帮我们匹配想要渲染的组件，而不用我们手动去匹配。
+
+可以看到重构后，少了很多代码，这种情况在页面多的时候，更为明显。
+
+## 4. React-Router 的实现
+
+接下来通过实现一个精简的 react-router 来了解其原理。
+
+以下内容基于 react-router 5.2 版本，5.x 使用的 history 版本为 4.x
+
+### 4.1 `<BrowserRouter />` 的实现
+
+BrowserRouter 是基于 HTML5 history 对 Router 组件进行包装，一般是浏览器端使用
+
+```jsx
+import React from "react";
+import { createBrowserHistory as createHistory } from "history";
+
+import Router from "./Router";
+
+class BrowserRouter extends React.Component {
+  // createHistory 返回一个基于 html5 history api 的自定义 history 对象
+  history = createHistory(this.props);
+
+  render() {
+    // 将 history 提供给 Router
+    return <Router history={this.history} children={this.props.children} />;
+  }
+}
+
+export default BrowserRouter;
+```
+
+### 4.2 `<Router />` 的实现
+
+```jsx
+import React from "react";
+
+import HistoryContext from "./HistoryContext.js";
+import RouterContext from "./RouterContext.js";
+
+class Router extends React.Component {
+  static computeRootMatch(pathname) {
+    return { path: "/", url: "/", params: {}, isExact: pathname === "/" };
+  }
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      location: props.history.location
+    };
+
+    // This is a bit of a hack. We have to start listening for location
+    // changes here in the constructor in case there are any <Redirect>s
+    // on the initial render. If there are, they will replace/push when
+    // they mount and since cDM fires in children before parents, we may
+    // get a new location before the <Router> is mounted.
+    this._isMounted = false;
+    this._pendingLocation = null;
+
+    // staticContext 是 StaticRouter 传入的，使用 BrowserRouter 时是没有的
+    if (!props.staticContext) {
+      // 开始监听 url 变化，变化时会执行传入的回调函数
+      this.unlisten = props.history.listen(location => {
+        // 这里做了一层兼容操作，有可能这里执行的时候，
+        // 组件还没加载完成，就会把 location 暂存起来，
+        // 等组件加载完成后再去更新 location
+        if (this._isMounted) {
+          this.setState({ location });
+        } else {
+          this._pendingLocation = location;
+        }
+      });
+    }
+  }
+
+  componentDidMount() {
+    this._isMounted = true;
+
+    if (this._pendingLocation) {
+      this.setState({ location: this._pendingLocation });
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.unlisten) {
+      this.unlisten();
+      this._isMounted = false;
+      this._pendingLocation = null;
+    }
+  }
+
+  render() {
+    return (
+      /*
+       * RouterContext 为子组件提供 history,location,match,staticContext 数据
+       * 这里 history 已经包含了 location，为什么这里还要将 location 单独传递呢？
+       * 因为 location 通过 state 保存，用于当 url 发生变化时，更新 state 实现同步渲染页面
+       */
+      <RouterContext.Provider
+        value={{
+          history: this.props.history,
+          location: this.state.location,
+          match: Router.computeRootMatch(this.state.location.pathname),
+          staticContext: this.props.staticContext
+        }}
+      >
+        // HistoryContext 主要为 子组件 提供 children 和 history 数据
+        <HistoryContext.Provider
+          children={this.props.children || null}
+          value={this.props.history}
+        />
+      </RouterContext.Provider>
+    );
+  }
+}
+
+export default Router;
+```
+
+### 4.3 `<Route />` 的实现
+
+`<Route />` 匹配单一的 path 并渲染相应的组件
+
+```jsx
+import React from "react";
+
+import RouterContext from "./RouterContext.js";
+import matchPath from "./matchPath.js";
+
+function isEmptyChildren(children) {
+  return React.Children.count(children) === 0;
+}
+
+class Route extends React.Component {
+  render() {
+    return (
+      <RouterContext.Consumer>
+        {context => {
+          const location = this.props.location || context.location;
+          
+          // 这里判断是否匹配当前 url，
+          // computedMatch 是使用 Switch 时，Switch 提前计算好是否匹配
+          // context.math 是 Router 传下来的
+          // 如果有用 Switch 则优先使用Switch 传递的 computedMatch 判断匹配
+          // 否则判断是否有 path，有 path 就计算是否匹配当前 url，
+          // 如果没有 path，则使用 Router 传递的 context.match
+          const match = this.props.computedMatch
+            ? this.props.computedMatch // <Switch> already computed the match for us
+            : this.props.path
+            ? matchPath(location.pathname, this.props)
+            : context.match;
+
+          const props = { ...context, location, match };
+
+          let { children, component, render } = this.props;
+
+          // Preact uses an empty array as children by
+          // default, so use null if that's the case.
+          if (Array.isArray(children) && isEmptyChildren(children)) {
+            children = null;
+          }
+
+          return (
+            <RouterContext.Provider value={props}>
+              {/* 渲染的优先级 children > component > render */}
+              {props.match
+                ? children
+                  ? typeof children === "function"
+                    ? children(props)
+                    : children
+                  : component
+                  ? React.createElement(component, props)
+                  : render
+                  ? render(props)
+                  : null
+                : typeof children === "function"
+                ? children(props)
+                : null}
+            </RouterContext.Provider>
+          );
+        }}
+      </RouterContext.Consumer>
+    );
+  }
+}
+
+export default Route;
+```
+
+### 4.4 `<Link />` 的实现
+
+为什么使用 Link 而不直接使用 a 标签？
+
+`<Link />` 是对 a 标签进行包装，屏蔽掉默认的行为，使用 history api 进行跳转，实现 url 改变的时候，不会重新加载页面。
+
+```jsx
+
+import React from "react";
+import RouterContext from "./RouterContext";
+import {
+  resolveToLocation,
+  normalizeToLocation
+} from "./utils/locationUtils.js";
+
+// React 15 compat
+const forwardRefShim = C => C;
+let { forwardRef } = React;
+if (typeof forwardRef === "undefined") {
+  forwardRef = forwardRefShim;
+}
+
+function isModifiedEvent(event) {
+  return !!(event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
+}
+
+const LinkAnchor = forwardRef(
+  (
+    {
+      innerRef, // TODO: deprecate
+      navigate,
+      onClick,
+      ...rest
+    },
+    forwardedRef
+  ) => {
+    const { target } = rest;
+
+    let props = {
+      ...rest,
+      onClick: event => {
+        try {
+          if (onClick) onClick(event);
+        } catch (ex) {
+          event.preventDefault();
+          throw ex;
+        }
+
+        /*
+         * event.defaultPrevented 判断 onClick 中是否执行了 event.preventDefault()
+         * event.button 判断点击的是否是左键
+         * target 判断链接是不是在当前窗口打开
+         * isModifiedEvent 判断是否是 组合键 事件（例如：按住alt+左键点击）
+         */
+        if (
+          !event.defaultPrevented && // onClick prevented default
+          event.button === 0 && // ignore everything but left clicks
+          (!target || target === "_self") && // let browser handle "target=_blank" etc.
+          !isModifiedEvent(event) // ignore clicks with modifier keys
+        ) {
+          event.preventDefault();
+          navigate();
+        }
+      }
+    };
+
+    // React 15 compat
+    if (forwardRefShim !== forwardRef) {
+      props.ref = forwardedRef || innerRef;
+    } else {
+      props.ref = innerRef;
+    }
+
+    /* eslint-disable-next-line jsx-a11y/anchor-has-content */
+    return <a {...props} />;
+  }
+);
+
+/**
+ * The public API for rendering a history-aware <a>.
+ */
+const Link = forwardRef(
+  (
+    {
+      // 可以传自定义的 component，如果没传 默认使用 LinkAnchor 组件
+      component = LinkAnchor,
+      // 默认是 false，使用 history.push，如果传 true，会使用 history.replace
+      replace,
+      // 跳转的目标，可以是 string、Object、Function
+      to,
+      innerRef, // TODO: deprecate
+      ...rest
+    },
+    forwardedRef
+  ) => {
+    return (
+      <RouterContext.Consumer>
+        {context => {
+          const { history } = context;
+
+          /**
+           * 根据传入  to 参数的不同形式，创建一个 location 对象
+           * resolveToLocation：如果 to 是function 执行 to，
+           * 传入 context.location 创建一个新的location，否则返回 to 本身
+           * 
+           * normalizeToLocation：如果 to 是 string，使用 createLocation 创建一个 location，
+           * 否则返回 to 本身
+           */
+          const location = normalizeToLocation(
+            resolveToLocation(to, context.location),
+            context.location
+          );
+
+          // 通过 location（{ pathname, search, hash }） 与 basename 组成 href
+          // basename 是使用 BrowserRouter 时传入的 props
+          const href = location ? history.createHref(location) : "";
+          const props = {
+            ...rest,
+            href,
+            navigate() {
+              /**
+               * navigate 使用 history 进行跳转
+               * 
+               * replace 是传入的 props 参数，
+               * 决定使用 history.replace 还是 history.push 进行跳转
+               * 
+               * history.replace 会替换当前history 栈中当前指针指向的那条记录 (history length 不变)
+               * history.push 会向栈中 push 多一条记录（history length + 1）
+               */
+              const location = resolveToLocation(to, context.location);
+              const method = replace ? history.replace : history.push;
+
+              method(location);
+            }
+          };
+
+          // React 15 compat
+          if (forwardRefShim !== forwardRef) {
+            props.ref = forwardedRef || innerRef;
+          } else {
+            props.innerRef = innerRef;
+          }
+
+          return React.createElement(component, props);
+        }}
+      </RouterContext.Consumer>
+    );
+  }
+);
+
+export default Link;
+```
+
+### 4.5 `<Switch />` 的实现
+
+`<Switch />` 会渲染第一个匹配到的它的 Route 子组件 ，使用 Switch 可以确保只渲染一个 Route 子组件。
+
+```jsx
+
+import React from 'react';
+
+import RouterContext from './RouterContext.js';
+import matchPath from './matchPath.js';
+
+class Switch extends React.Component {
+  render() {
+    return (
+      <RouterContext.Consumer>
+        {(context) => {
+          const location = this.props.location || context.location;
+
+          let element, match;
+
+          // We use React.Children.forEach instead of React.Children.toArray().find()
+          // here because toArray adds keys to all child elements and we do not want
+          // to trigger an unmount/remount for two <Route>s that render the same
+          // component at different URLs.
+          React.Children.forEach(this.props.children, (child) => {
+            if (match == null && React.isValidElement(child)) {
+              element = child;
+              
+              // from 是来自 <Redirect />
+              const path = child.props.path || child.props.from;
+
+              match = path
+                ? matchPath(location.pathname, { ...child.props, path })
+                : context.match;
+            }
+          });
+
+          return match
+            ? React.cloneElement(element, { location, computedMatch: match })
+            : null;
+        }}
+      </RouterContext.Consumer>
+    );
+  }
+}
+
+export default Switch;
+```
+
+### 4.6 `<Redirect />` 的实现
+
+```jsx
+
+import React from "react";
+import { createLocation, locationsAreEqual } from "history";
+
+import Lifecycle from "./Lifecycle.js";
+import RouterContext from "./RouterContext.js";
+import generatePath from "./generatePath.js";
+
+/**
+ * The public API for navigating programmatically with a component.
+ */
+/**
+ * 
+ */
+function Redirect({ computedMatch, to, push = false }) {
+  return (
+    <RouterContext.Consumer>
+      {context => {
+        const { history, staticContext } = context;
+
+        // 根据 push 参数判断使用的方法
+        const method = push ? history.push : history.replace;
+        /**
+         * 创建一个 location 对象
+         * computedMatch 是使用 <Switch /> 传递过来的
+         * to 可以是 string 或 object
+         * generatePath 根据 to 和 params 生成 path
+         * 最后 createLocation 生成 location 对象
+         */
+        const location = createLocation(
+          computedMatch
+            ? typeof to === "string"
+              ? generatePath(to, computedMatch.params)
+              : {
+                  ...to,
+                  pathname: generatePath(to.pathname, computedMatch.params)
+                }
+            : to
+        );
+
+        // When rendering in a static context,
+        // set the new location immediately.
+        if (staticContext) {
+          method(location);
+          return null;
+        }
+
+        return (
+          <Lifecycle
+            onMount={() => {
+              method(location);
+            }}
+            onUpdate={(self, prevProps) => {
+              const prevLocation = createLocation(prevProps.to);
+              if (
+                !locationsAreEqual(prevLocation, {
+                  ...location,
+                  key: prevLocation.key
+                })
+              ) {
+                method(location);
+              }
+            }}
+            to={to}
+          />
+        );
+      }}
+    </RouterContext.Consumer>
+  );
+}
+
+export default Redirect;
+```
+
+./Lifecycle.js
+
+```javascript
+
+import React from "react";
+
+class Lifecycle extends React.Component {
+  componentDidMount() {
+    if (this.props.onMount) this.props.onMount.call(this, this);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (this.props.onUpdate) this.props.onUpdate.call(this, this, prevProps);
+  }
+
+  componentWillUnmount() {
+    if (this.props.onUnmount) this.props.onUnmount.call(this, this);
+  }
+
+  render() {
+    return null;
+  }
+}
+
+export default Lifecycle;
+```
+
+./generatePath.js
+
+```javascript
+
+import pathToRegexp from "path-to-regexp";
+
+const cache = {};
+const cacheLimit = 10000;
+let cacheCount = 0;
+
+function compilePath(path) {
+  if (cache[path]) return cache[path];
+
+  const generator = pathToRegexp.compile(path);
+
+  if (cacheCount < cacheLimit) {
+    cache[path] = generator;
+    cacheCount++;
+  }
+
+  return generator;
+}
+
+/**
+ * Public API for generating a URL pathname from a path and parameters.
+ */
+function generatePath(path = "/", params = {}) {
+  return path === "/" ? path : compilePath(path)(params, { pretty: true });
+}
+
+export default generatePath;
+```
+
+## 5. history
+
+version 4.7.0
+
+### 5.1 createBrowserHistory
+
+首先看一下 createBrowserHistory 这个 API 返回哪些方法，再逐个看每个方法的实现。
+
+```javascript
+
+const createBrowserHistory = (props = {}) => {
+  /* 此处省略具体功能函数实现代码 */
+ 
+  const history = {
+    length: globalHistory.length,
+    action: 'POP',
+    location: initialLocation,
+    createHref,
+    push,
+    replace,
+    go,
+    goBack,
+    goForward,
+    block,
+    listen
+  }
+
+  return history
+}
+```
+
+### 5.2 history.listen
+
+```javascript
+const listen = (listener) => {
+  /*
+   * transitionManager 是一个 location 转换过程的管理器，使用 发布-订阅 的模式
+   * appendListener 会将 listener 保存在 transitionManager 内的 listeners 数组中
+   * appendListener 返回一个函数，这个函数执行后会将 相应的 listener 从 listeners 数组中过滤掉
+   * checkDOMListeners
+   */
+  const unlisten = transitionManager.appendListener(listener)
+  checkDOMListeners(1)
+
+  return () => {
+    checkDOMListeners(-1)
+    unlisten()
+  }
+}
+```
+
+appendListener 的实现，位于 ./createTransitionManager.js
+
+```javascript
+const appendListener = (fn) => {
+  // isActive 用于保存当前监听函数的状态，默认是 true，取消监听后会变成 false
+  // 主要用于处理，listeners 数组中函数已经在遍历执行，同时取消监听，
+  // 这时可能这个函数还在执行的数组队列中，isActive 变成 false 可以阻止该函数继续执行
+  let isActive = true
+
+  const listener = (...args) => {
+    if (isActive)
+      fn(...args)
+  }
+
+  listeners.push(listener)
+
+  // 返回一个取消监听的函数
+  return () => {
+    isActive = false
+    listeners = listeners.filter(item => item !== listener) // 过滤掉 listener
+  }
+}
+```
+
+checkDOMListeners 的实现
+
+```javascript
+
+const checkDOMListeners = (delta) => {
+  listenerCount += delta
+
+  if (listenerCount === 1) {
+    // 对 popstate 事件进行监听，handlePopState 会
+    addEventListener(window, PopStateEvent, handlePopState)
+
+    if (needsHashChangeListener)
+      addEventListener(window, HashChangeEvent, handleHashChange)
+  } else if (listenerCount === 0) {
+    removeEventListener(window, PopStateEvent, handlePopState)
+
+    if (needsHashChangeListener)
+      removeEventListener(window, HashChangeEvent, handleHashChange)
+  }
+}
+
+const handlePopState = (event) => {
+  // 忽略无关的 popstate 事件
+  if (isExtraneousPopstateEvent(event))
+    return 
+
+  handlePop(getDOMLocation(event.state))
+}
+
+// 返回一个 location 对象
+const getDOMLocation = (historyState) => {
+  const { key, state } = (historyState || {})
+  const { pathname, search, hash } = window.location
+
+  let path = pathname + search + hash
+
+  if (basename)
+    path = stripBasename(path, basename)
+
+  return createLocation(path, state, key)
+}
+
+let forceNextPop = false
+const handlePop = (location) => {
+  // forceNextPop 默认为 false，所以默认会走 else
+  if (forceNextPop) {
+    forceNextPop = false
+    setState()
+  } else {
+    const action = 'POP'
+    
+    // confirmTransitionTo 正常情况下，会调用最后一个回调函数，
+    // 然后传入 ok 为 true，执行 setState
+    transitionManager.confirmTransitionTo(location, action, getUserConfirmation, (ok) => {
+      if (ok) {
+        setState({ action, location })
+      } else {
+        revertPop(location)
+      }
+    })
+  }
+}
+
+// setState 会把新的 state 合并到 history 对象，然后调用 notifyListeners
+// notifyListeners 会执行 listen 时候保存的监听函数
+const setState = (nextState) => {
+  Object.assign(history, nextState)
+
+  history.length = globalHistory.length
+
+  transitionManager.notifyListeners(
+    history.location,
+    history.action
+  )
+}
+```
+
+notifyListeners 的实现，位于 ./createTransitionManager.js
+
+```javascript
+const notifyListeners = (...args) => {
+  listeners.forEach(listener => listener(...args))
+}
+```
+
+confirmTransitionTo 的实现，位于 ./createTransitionManager.js
+
+```javascript
+const confirmTransitionTo = (location, action, getUserConfirmation, callback) => {
+  // 使用 Prompt 才会进入这个，否则进入 else
+  if (prompt != null) {
+    const result = typeof prompt === 'function' ? prompt(location, action) : prompt
+
+    if (typeof result === 'string') {
+      if (typeof getUserConfirmation === 'function') {
+        getUserConfirmation(result, callback)
+      } else {
+        callback(true)
+      }
+    } else {
+      // Return false from a transition hook to cancel the transition.
+      callback(result !== false)
+    }
+  } else {
+    // 没有 prompt 就只执行这个
+    callback(true)
+  }
+}
+```
+
+### 5.3 history.push
+
+```javascript
+const push = (path, state) => {
+  const action = 'PUSH'
+  const location = createLocation(path, state, createKey(), history.location)
+
+  transitionManager.confirmTransitionTo(location, action, getUserConfirmation, (ok) => {
+    if (!ok)
+      return
+
+    const href = createHref(location)
+    const { key, state } = location
+
+    if (canUseHistory) {
+      // 使用原生 history 的 pushState 方法，改变 url
+      globalHistory.pushState({ key, state }, null, href)
+
+      if (forceRefresh) {
+        window.location.href = href
+      } else {
+        const prevIndex = allKeys.indexOf(history.location.key)
+        const nextKeys = allKeys.slice(0, prevIndex === -1 ? 0 : prevIndex + 1)
+
+        nextKeys.push(location.key)
+        allKeys = nextKeys
+
+        setState({ action, location })
+      }
+    } else {
+      window.location.href = href
+    }
+  })
+}
+```
+
+参考资料
+
+React-Router 官网：![](https://reactrouter.com/web/guides/quick-start)
+
+Github 源码：![](https://github.com/ReactTraining/react-router)
+
+扫下方二维码或微信搜索，关注公众号「天才前端计划」,获取一手资料。
+
+
+![公众号 天才前端计划](https://github.com/silinchen/mvvm/blob/master/img/qrcode_for_天才前端计划.jpg)
+
+谢谢您的支持^_^
